@@ -1,14 +1,14 @@
-var express = require("express");
+const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-var router = express.Router();
+const router = express.Router();
 const User = require("../models/User");
 const { validateRegister } = require("../validation/auth");
 
 const { createAccess, createRefresh } = require("../utils/auth");
 
-router.post("/register", async (req, res, next) => {
+router.post("/register", async (req, res) => {
   const exists = await User.findOne({ username: req.body.username });
   if (exists) {
     return res.status(400).json({
@@ -20,14 +20,14 @@ router.post("/register", async (req, res, next) => {
       },
     });
   }
-  const { error } = validateRegister(req.body);
 
+  const { error } = validateRegister(req.body);
   if (error) {
     return res.status(400).json({ error });
   }
 
   const { username, password, phoneNumber } = req.body;
-  const hashedPassword = bcrypt.hashSync(req.body.password, 8);
+  const hashedPassword = bcrypt.hashSync(password, 8);
   const params = { username, password: hashedPassword };
 
   if (phoneNumber) {
@@ -46,11 +46,11 @@ router.post("/register", async (req, res, next) => {
     const savedUser = await user.save();
     res.status(200).json({ access, refresh, user: savedUser });
   } catch (error) {
-    res.status(400).json({ error });
+    res.status(500).json({ error });
   }
 });
 
-router.post("/token/obtain", async (req, res, next) => {
+router.post("/token/obtain", async (req, res) => {
   const { username, password } = req.body;
 
   User.findOne({ username }, (error, user) => {
